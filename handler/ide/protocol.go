@@ -22,8 +22,8 @@ type ProxyXmlMessage struct {
 	Error   string `xml:"error>message"`
 }
 
-func newXmlMessage(ideCommand *IdeCommand) ProxyXmlMessage {
-	return ProxyXmlMessage{
+func newXmlMessage(ideCommand *IdeCommand) *ProxyXmlMessage {
+	return &ProxyXmlMessage{
 		XMLName: xml.Name{Local: ideCommand.Name},
 		Success: 1,
 		Idekey:  ideCommand.Idekey,
@@ -46,8 +46,8 @@ func createIdeCommand(commandString string) (*IdeCommand, error) {
 		return ideCommand, fmt.Errorf("empty command name %s", ideCommand.Name)
 	}
 
-	for i := 1; i < len(pars); i++ {
-
+	l := len(pars)
+	for i := 1; i < l; i++ {
 		if pars[i] == "-p" {
 			i++
 			ideCommand.Port = pars[i]

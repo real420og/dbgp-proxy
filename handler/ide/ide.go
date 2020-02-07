@@ -77,8 +77,8 @@ func (handler *IdeHandler) processMessage(command *IdeCommand, host string) erro
 	return nil
 }
 
-func (handler *IdeHandler) sendResponse(conn net.Conn, proxyXmlMessage ProxyXmlMessage) error {
-	message, err := xml.Marshal(proxyXmlMessage)
+func (handler *IdeHandler) sendResponse(conn net.Conn, proxyXmlMessage *ProxyXmlMessage) error {
+	message, err := xml.Marshal(&proxyXmlMessage)
 
 	if err != nil {
 		return err
