@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestSendResponsef(t *testing.T) {
+func TestSendResponse(t *testing.T) {
 	ideConnectionList := storage.NewListIdeConnection()
 	handler := NewIdeHandler(ideConnectionList)
 
