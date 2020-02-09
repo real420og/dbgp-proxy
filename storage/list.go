@@ -15,20 +15,20 @@ func NewListIdeConnection() *ListIdeConnection {
 
 func (list *ListIdeConnection) AddIdeConnection(ideConnection *IdeConnection) {
 	list.Lock()
-	defer list.Unlock()
 	list.ideConnection[ideConnection.key] = ideConnection
+	list.Unlock()
 }
 
 func (list *ListIdeConnection) DeleteIdeConnection(key string) {
 	list.Lock()
-	defer list.Unlock()
 	delete(list.ideConnection, key)
+	list.Unlock()
 }
 
 func (list *ListIdeConnection) FindIdeConnection(key string) (*IdeConnection, bool) {
 	list.Lock()
-	defer list.Unlock()
 	ideConnection, ok := list.ideConnection[key]
+	list.Unlock()
 	return ideConnection, ok
 }
 
