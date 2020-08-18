@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"github.com/real420og/dbgp-proxy/handler/debug"
-	"github.com/real420og/dbgp-proxy/handler/ide"
+	debughandler "github.com/real420og/dbgp-proxy/handler/debug"
+	idehandler "github.com/real420og/dbgp-proxy/handler/ide"
 	"github.com/real420og/dbgp-proxy/server"
 	"github.com/real420og/dbgp-proxy/storage"
 	"log"
