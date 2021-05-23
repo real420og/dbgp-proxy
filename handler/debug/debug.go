@@ -62,6 +62,10 @@ func (proxy *DebugHandler) sendAndPipe(conn net.Conn, idekey string, initMessage
 	client, err := net.Dial("tcp", ideConnection.FullAddress())
 
 	defer func(closer io.Closer) {
+		if closer == nil {
+			return
+		}
+
 		err := closer.Close()
 		if err != nil {
 			log.Fatal(err)
