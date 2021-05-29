@@ -1,9 +1,11 @@
 package server
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net"
+	"strings"
 	"sync"
 	"time"
 )
@@ -15,71 +17,122 @@ type Server struct {
 	address *net.TCPAddr
 	stop    bool
 	group   *sync.WaitGroup
+	xx      *Xx
 }
 
-func NewServer(name string, address *net.TCPAddr, group *sync.WaitGroup) *Server {
+type Xx struct {
+	C  chan St
+	St St
+}
+
+func (xx *Xx) Act1(act1 string) {
+	xx.St.Act1 = &act1
+	xx.C <- xx.St
+}
+func (xx *Xx) Act2(act2 string) {
+	xx.St.Act2 = &act2
+	xx.C <- xx.St
+}
+func (xx *Xx) Act3(act3 string) {
+	xx.St.Act3 = &act3
+	xx.C <- xx.St
+}
+func (xx *Xx) Act4(act4 string) {
+	xx.St.Act4 = &act4
+	xx.C <- xx.St
+}
+func (xx *Xx) Read() {
+	for i := range xx.C {
+		fmt.Print("\033[H\033[2J")
+		if i.Act1 != nil {fmt.Println(*i.Act1)} else{fmt.Println("")}
+		if i.Act2 != nil {fmt.Println(*i.Act2)} else{fmt.Println("")}
+		if i.Act3 != nil {fmt.Println(*i.Act3)} else{fmt.Println("")}
+		if i.Act4 != nil {fmt.Println(*i.Act4)} else{fmt.Println("")}
+	}
+}
+
+type St struct {
+	Act1 *string
+	Act2 *string
+	Act3 *string
+	Act4 *string
+}
+
+func NewServer(name string, address *net.TCPAddr, group *sync.WaitGroup, xx *Xx) *Server {
 	return &Server{
 		name,
 		address,
 		false,
 		group,
+		xx,
 	}
 }
 
-func (server *Server) Stop() {
-	server.stop = true
+func (that *Server) Stop() {
+	that.stop = true
 }
 
-func (server *Server) Listen(handler Handler) {
-	server.group.Add(1)
-	defer server.group.Done()
+func (that *Server) Listen(handler Handler) {
+	that.group.Add(1)
+	defer that.group.Done()
 
-	listener, err := net.ListenTCP("tcp", server.address)
+	listener, err := net.ListenTCP("tcp", that.address)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	defer server.closeConnection(listener)
+	that.xx.Act1("text value 3245")
 
-	log.Printf("start %s server on %s", server.name, server.address)
+
+	defer that.closeConnection(listener)
+
+	log.Printf("start %s server on %s", that.name, that.address)
 
 	for {
-		if server.stop {
+		that.xx.Act1("loop")
+		if that.stop {
 			break
 		}
 		_ = listener.SetDeadline(time.Now().Add(deadlineTime))
 		conn, err := listener.Accept()
 		if err != nil {
 			if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
+
+				a := []string{
+					"accept tcp nil",
+					opErr.Addr.Network(),
+					opErr.Addr.String(),
+					opErr.Error(),
+					opErr.Net,
+					opErr.Op,
+				}
+
+				that.xx.Act2(strings.Join(a, " "))
 				continue
 			}
 			log.Print(err)
 			continue
 		}
-		go server.handleConnection(conn, handler)
+
+		go func(conn net.Conn, handler Handler, xx *Xx) {
+			defer that.closeConnection(conn)
+			that.group.Add(1)
+			defer that.group.Done()
+
+			err := handler.Handle(conn, xx)
+
+			if err != nil {
+				xx.Act3(fmt.Sprintf("handler response error: %s", err))
+			}
+		}(conn, handler, that.xx)
 	}
 
-	log.Printf("shutdown %s server", server.name)
+	log.Printf("shutdown %s server", that.name)
 }
 
-func (server *Server) handleConnection(conn net.Conn, handler Handler) {
-	defer server.closeConnection(conn)
-	server.group.Add(1)
-	defer server.group.Done()
-	log.Printf("start new connection on %s from %s", server.name, conn.RemoteAddr())
-	err := handler.Handle(conn)
-
-	if err != nil {
-		log.Printf("handler response error %s", err)
-	}
-
-	log.Printf("close connection on %s from %s", server.name, conn.RemoteAddr())
-}
-
-func (server *Server) closeConnection(closer io.Closer) {
+func (that *Server) closeConnection(closer io.Closer) {
 	err := closer.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("close %s connection", server.name)
 }

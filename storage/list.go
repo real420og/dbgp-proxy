@@ -6,34 +6,34 @@ import (
 
 type ListIdeConnection struct {
 	sync.Mutex
-	ideConnection map[string]*IdeConnection
+	IdeConnection map[string]*IdeConnection
 }
 
 func NewListIdeConnection() *ListIdeConnection {
-	return &ListIdeConnection{ideConnection: map[string]*IdeConnection{}}
+	return &ListIdeConnection{IdeConnection: map[string]*IdeConnection{}}
 }
 
-func (list *ListIdeConnection) AddIdeConnection(ideConnection *IdeConnection) {
+func (list *ListIdeConnection) AddIdeConnection(key string, ideConnection *IdeConnection) {
 	list.Lock()
-	list.ideConnection[ideConnection.key] = ideConnection
+	list.IdeConnection[key] = ideConnection
 	list.Unlock()
 }
 
 func (list *ListIdeConnection) DeleteIdeConnection(key string) {
 	list.Lock()
-	delete(list.ideConnection, key)
+	delete(list.IdeConnection, key)
 	list.Unlock()
 }
 
 func (list *ListIdeConnection) FindIdeConnection(key string) (*IdeConnection, bool) {
 	list.Lock()
-	ideConnection, ok := list.ideConnection[key]
+	ideConnection, ok := list.IdeConnection[key]
 	list.Unlock()
 	return ideConnection, ok
 }
 
 func (list *ListIdeConnection) HasIdeConnection(key string) bool {
-	if _, ok := list.ideConnection[key]; ok {
+	if _, ok := list.IdeConnection[key]; ok {
 		return true
 	}
 
@@ -41,7 +41,7 @@ func (list *ListIdeConnection) HasIdeConnection(key string) bool {
 }
 
 func (list *ListIdeConnection) HasNotIdeConnection(key string) bool {
-	if _, ok := list.ideConnection[key]; ok {
+	if _, ok := list.IdeConnection[key]; ok {
 		return false
 	}
 

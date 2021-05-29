@@ -8,8 +8,8 @@ import (
 	"github.com/real420og/dbgp-proxy/server"
 	"github.com/real420og/dbgp-proxy/storage"
 	"io"
-	"log"
 	"net"
+	"strings"
 )
 
 type IdeHandler struct {
@@ -20,54 +20,53 @@ func NewIdeHandler(storage *storage.ListIdeConnection) *IdeHandler {
 	return &IdeHandler{listIdeConnection: storage}
 }
 
-func (handler *IdeHandler) Handle(conn net.Conn) error {
+func (that *IdeHandler) Handle(conn net.Conn, xx *server.Xx) error {
 	reader := bufio.NewReader(conn)
 	data, err := reader.ReadBytes(server.ReadDelimiter)
 	if err != nil && err != io.EOF {
 		return fmt.Errorf("%s", err)
 	}
 
-	log.Println("new ide connection")
+	xx.Act3(strings.Join([]string{"ide handler: ", fmt.Sprintf("%s", data)}, " "))
 
-	message := string(data[:len(data)-1])
-
-	command, err := createIdeCommand(message)
+	command, err := createIdeCommand(string(data[:len(data)-1]))
 	xmlMessage := newXmlMessage(command)
 
 	if err != nil {
-		xmlMessage.setError(err)
-		return handler.sendResponse(conn, xmlMessage)
+		return that.sendResponse(conn, xmlMessage, err)
 	}
 
-	host, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+	remoteAddr := conn.RemoteAddr().String()
+	localAddr := conn.LocalAddr().String()
+
+	ideHost, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 	if err != nil {
-		xmlMessage.setError(err)
-		return handler.sendResponse(conn, xmlMessage)
+		return that.sendResponse(conn, xmlMessage, err)
 	}
 
-	err = handler.processMessage(command, host)
-
-	if err != nil {
-		xmlMessage.setError(err)
-		return handler.sendResponse(conn, xmlMessage)
-	}
-
-	return handler.sendResponse(conn, xmlMessage)
-}
-
-func (handler *IdeHandler) processMessage(command *IdeCommand, host string) error {
-	actions := map[string]Action{
+	actions := map[string]Execer{
 		commandInit: &Init{
-			host:    host,
-			storage: handler.listIdeConnection,
+			IdeHost:    ideHost,
+			RemoteAddr:    remoteAddr,
+			LocalAddr:    localAddr,
+			Storage: that.listIdeConnection,
 		},
 		commandStop: &Stop{
-			storage: handler.listIdeConnection,
+			IdeHost:    ideHost,
+			RemoteAddr:    remoteAddr,
+			LocalAddr:    localAddr,
+			Storage: that.listIdeConnection,
 		},
 	}
 
+	err = that.processMessage(command, actions, xx)
+
+	return that.sendResponse(conn, xmlMessage, err)
+}
+
+func (that *IdeHandler) processMessage(command *IdeCommand, actions map[string]Execer, xx  *server.Xx) error {
 	if action, ok := actions[command.Name]; ok {
-		err := action.Exec(command)
+		err := action.Exec(command, xx)
 
 		if err, ok := err.(error); ok {
 			return err
@@ -77,7 +76,11 @@ func (handler *IdeHandler) processMessage(command *IdeCommand, host string) erro
 	return nil
 }
 
-func (handler *IdeHandler) sendResponse(conn net.Conn, proxyXmlMessage *ProxyXmlMessage) error {
+func (that *IdeHandler) sendResponse(conn net.Conn, proxyXmlMessage *ProxyXmlMessage, err error) error {
+	if err != nil {
+		proxyXmlMessage.setError(err)
+	}
+
 	message, err := xml.Marshal(&proxyXmlMessage)
 
 	if err != nil {

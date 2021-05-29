@@ -1,19 +1,15 @@
 package storage
 
-import (
-	"net"
-)
+import "net"
 
 type IdeConnection struct {
-	address string
-	port    string
-	key     string
+	IdeHost string `json:"ideHost"`
+	RemoteAddr string `json:"remoteAddr"`
+	LocalAddr    string `json:"localAddr"`
+	IdeKey     string `json:"ideKey"`
+	Port     string `json:"port"`
 }
 
-func NewIdeConnection(address string, port string, key string) *IdeConnection {
-	return &IdeConnection{key: key, address: address, port: port}
-}
-
-func (ideConnection *IdeConnection) FullAddress() string {
-	return net.JoinHostPort(ideConnection.address, ideConnection.port)
+func (thus *IdeConnection) FullAddress() string {
+	return net.JoinHostPort(thus.IdeHost, thus.Port)
 }

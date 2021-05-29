@@ -23,7 +23,7 @@ func NewDebugHandler(storage *storage.ListIdeConnection) *DebugHandler {
 	return &DebugHandler{listIdeConnection: storage}
 }
 
-func (proxy *DebugHandler) Handle(conn net.Conn) error {
+func (proxy *DebugHandler) Handle(conn net.Conn, xx *server.Xx) error {
 	reader := bufio.NewReader(conn)
 	dataLength, err := reader.ReadBytes(server.ReadDelimiter)
 	if err != nil && err != io.EOF {
@@ -38,6 +38,8 @@ func (proxy *DebugHandler) Handle(conn net.Conn) error {
 	if err != nil && err != io.EOF {
 		return fmt.Errorf("%s", err)
 	}
+
+	xx.Act1(string(message[:len(message)-1]))
 
 	idekey, err := getIdekey(message[:len(message)-1])
 	if err != nil {
