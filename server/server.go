@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -25,6 +26,26 @@ type Xx struct {
 	St St
 }
 
+func (xx *Xx) Act6(act string) {
+	xx.St.Act6 = &act
+	xx.C <- xx.St
+}
+func (xx *Xx) Act5(act string) {
+	xx.St.Act5 = &act
+	xx.C <- xx.St
+}
+func (xx *Xx) Act7(act string) {
+	xx.St.Act7 = &act
+	xx.C <- xx.St
+}
+func (xx *Xx) Act8(act string) {
+	xx.St.Act8 = &act
+	xx.C <- xx.St
+}
+func (xx *Xx) Act9(act string) {
+	xx.St.Act9 = &act
+	xx.C <- xx.St
+}
 func (xx *Xx) Act1(act1 string) {
 	xx.St.Act1 = &act1
 	xx.C <- xx.St
@@ -41,13 +62,31 @@ func (xx *Xx) Act4(act4 string) {
 	xx.St.Act4 = &act4
 	xx.C <- xx.St
 }
+func (xx *Xx) IdeWySendMessage(key string, act SerIdeKey) {
+	xx.St.IdeWySendMessage[key] = &act
+	xx.C <- xx.St
+}
 func (xx *Xx) Read() {
 	for i := range xx.C {
 		fmt.Print("\033[H\033[2J")
-		if i.Act1 != nil {fmt.Println(*i.Act1)} else{fmt.Println("")}
-		if i.Act2 != nil {fmt.Println(*i.Act2)} else{fmt.Println("")}
-		if i.Act3 != nil {fmt.Println(*i.Act3)} else{fmt.Println("")}
-		if i.Act4 != nil {fmt.Println(*i.Act4)} else{fmt.Println("")}
+		if i.Act1 != nil {fmt.Println(fmt.Sprintf("1: %s \n\n", *i.Act1))} else{fmt.Println("")}
+		if i.Act2 != nil {fmt.Println(fmt.Sprintf("2: %s \n\n", *i.Act2))} else{fmt.Println("")}
+		if i.Act3 != nil {fmt.Println(fmt.Sprintf("3: %s \n\n", *i.Act3))} else{fmt.Println("")}
+		if i.Act4 != nil {fmt.Println(fmt.Sprintf("4: %s \n\n", *i.Act4))} else{fmt.Println("")}
+		if i.Act5 != nil {fmt.Println(fmt.Sprintf("5: %s \n\n", *i.Act5))} else{fmt.Println("")}
+		if i.Act6 != nil {fmt.Println(fmt.Sprintf("6: %s \n\n", *i.Act6))} else{fmt.Println("")}
+		if i.Act7 != nil {fmt.Println(fmt.Sprintf("7: %s \n\n", *i.Act7))} else{fmt.Println("")}
+		if i.Act8 != nil {fmt.Println(fmt.Sprintf("8: %s \n\n", *i.Act8))} else{fmt.Println("")}
+		if i.Act9 != nil {fmt.Println(fmt.Sprintf("9: %s \n\n", *i.Act9))} else{fmt.Println("")}
+
+		if i.IdeWySendMessage != nil {
+			dd, _ := json.Marshal(i.IdeWySendMessage)
+			if i.IdeWySendMessage != nil {
+				fmt.Println(fmt.Sprintf("IdeWySendMessage: %s \n\n", dd))
+			} else {
+				fmt.Println("")
+			}
+		}
 	}
 }
 
@@ -56,6 +95,18 @@ type St struct {
 	Act2 *string
 	Act3 *string
 	Act4 *string
+	Act6 *string
+	Act5 *string
+	Act7 *string
+	Act8 *string
+	Act9 *string
+	IdeWySendMessage map[string]*SerIdeKey
+}
+
+
+type SerIdeKey struct {
+	Server string
+	IdeKey string
 }
 
 func NewServer(name string, address *net.TCPAddr, group *sync.WaitGroup, xx *Xx) *Server {

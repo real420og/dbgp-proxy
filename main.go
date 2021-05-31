@@ -17,15 +17,16 @@ import (
 
 func main() {
 	ideHostnamePort := *flag.String("ide", "0.0.0.0:9002", "ip:port for ide connections")
-	debugHostnamePort := *flag.String("xdebug", "0.0.0.0:9005", "ip:port for xdebug connections")
+	debugHostnamePort := *flag.String("xdebug", "0.0.0.0:9001", "ip:port for xdebug connections")
 	flag.Parse()
 
 	ideConnectionList := storage.NewListIdeConnection()
 
 	syncGroup := &sync.WaitGroup{}
 
+	d := map[string]*server.SerIdeKey{}
+	c := &server.Xx{C: make(chan server.St), St: server.St{IdeWySendMessage: d}}
 
-	c := &server.Xx{C: make(chan server.St)}
 
 	ideServer := server.NewServer("ide", resolveTCP(ideHostnamePort), syncGroup, c)
 	debugServer := server.NewServer("debug", resolveTCP(debugHostnamePort), syncGroup, c)

@@ -1,10 +1,10 @@
 package idehandler
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/real420og/dbgp-proxy/server"
 	"github.com/real420og/dbgp-proxy/storage"
-	"log"
 )
 
 type Execer interface {
@@ -19,15 +19,24 @@ type Init struct {
 }
 
 func (s *Init) Exec(command *IdeCommand, xx *server.Xx) error {
-	if s.Storage.HasNotIdeConnection(command.Idekey) {
+	key := s.IdeHost + s.LocalAddr + command.Idekey
+	if s.Storage.HasNotIdeConnection(key) {
 
-		dd := &storage.IdeConnection{IdeHost: s.IdeHost, RemoteAddr: s.RemoteAddr, LocalAddr: s.LocalAddr, IdeKey: command.Idekey, Port: command.Port}
-		s.Storage.AddIdeConnection(command.Idekey, dd)
+		s.Storage.AddIdeConnection(key, &storage.IdeConnection{
+			IdeHost: s.IdeHost,
+			RemoteAddr: s.RemoteAddr,
+			LocalAddr: s.LocalAddr,
+			IdeKey: command.Idekey,
+			Port: command.Port,
+		})
+
+		ss, _ := json.Marshal(s.Storage)
+		xx.Act4(string(ss))
 
 		return nil
 	}
 
-	return fmt.Errorf("%s", command.Idekey)
+	return fmt.Errorf("already in use")
 }
 
 type Stop struct {
@@ -39,12 +48,16 @@ type Stop struct {
 }
 
 func (s *Stop) Exec(command *IdeCommand, xx *server.Xx) error {
-	if s.Storage.HasIdeConnection(command.Idekey) {
-		s.Storage.DeleteIdeConnection(command.Idekey)
-		log.Printf("delete client with idekey %s", command.Idekey)
+	key := s.IdeHost + s.LocalAddr + command.Idekey
+	if s.Storage.HasIdeConnection(key) {
+		s.Storage.DeleteIdeConnection(key)
+
+		ss, _ := json.Marshal(s.Storage)
+		xx.Act4(string(ss))
+
 		return nil
 	}
 
-	log.Printf("attempt to delete idekey %s", command.Idekey)
-	return fmt.Errorf("idekey %s is not registered", command.Idekey)
+	//log.Printf("attempt to delete idekey %s", command.Idekey)
+	return fmt.Errorf("is not registered")
 }
