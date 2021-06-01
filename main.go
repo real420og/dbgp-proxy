@@ -13,19 +13,38 @@ import (
 	"sync"
 )
 
+
+
 func main() {
-	ideHostnamePort := flag.String("ide", "0.0.0.0:9002", "ip:port for ide connections")
-	debugHostnamePort := flag.String("xdebug", "0.0.0.0:9001", "ip:port for xdebug connections")
+	ideHostnamePort := *flag.String("ide", "0.0.0.0:9002", "ip:port for ide connections")
+	debugHostnamePort := *flag.String("xdebug", "0.0.0.0:9001", "ip:port for xdebug connections")
 	flag.Parse()
 
 	ideConnectionList := storage.NewListIdeConnection()
 
 	syncGroup := &sync.WaitGroup{}
-	ideServer := server.NewServer("ide", resolveTCP(*ideHostnamePort), syncGroup)
-	debugServer := server.NewServer("debug", resolveTCP(*debugHostnamePort), syncGroup)
+
+	d := map[string]*server.SerIdeKey{}
+	c := &server.Xx{C: make(chan server.St), St: server.St{IdeWySendMessage: d}}
+
+
+	ideServer := server.NewServer("ide", resolveTCP(ideHostnamePort), syncGroup, c)
+	debugServer := server.NewServer("debug", resolveTCP(debugHostnamePort), syncGroup, c)
 
 	go ideServer.Listen(idehandler.NewIdeHandler(ideConnectionList))
 	go debugServer.Listen(debughandler.NewDebugHandler(ideConnectionList))
+
+	go c.Read()
+	//go func() {
+	//	for i := range c.C {
+	//		fmt.Print("\033[H\033[2J")
+	//		if i.Act1 != nil {fmt.Println(i.Act1)} else{fmt.Println("")}
+	//		if i.Act2 != nil {fmt.Println(i.Act2)} else{fmt.Println("")}
+	//		if i.Act3 != nil {fmt.Println(i.Act3)} else{fmt.Println("")}
+	//
+	//		//fmt.Print("sssssssss: "+i)
+	//	}
+	//}()
 
 	log.Println("dbgp proxy started")
 

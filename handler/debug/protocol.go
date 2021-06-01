@@ -8,6 +8,7 @@ import (
 
 type DebugPacket struct {
 	Idekey string `xml:"idekey,attr"`
+	Appid string `xml:"appid,attr"`
 }
 
 func getIdekey(packet []byte) (string, error) {

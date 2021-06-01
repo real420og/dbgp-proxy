@@ -7,5 +7,5 @@ import (
 const ReadDelimiter = 0
 
 type Handler interface {
-	Handle(conn net.Conn) error
+	Handle(conn net.Conn,  xx *Xx) error
 }
